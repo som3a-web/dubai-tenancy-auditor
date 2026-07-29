@@ -1,0 +1,151 @@
+{
+  "meta": {
+    "description": "Verified provisions of Dubai tenancy law. Every quote below was retrieved verbatim from the Dubai Legislation Portal (dlp.dubai.gov.ae) on the date given. The agent may cite ONLY from this file. If a situation is not covered by a provision here, the agent must say it cannot determine the answer rather than describing a provision from memory.",
+    "verified_on": "2026-07-29",
+    "translation_note": "These are the official English translations published on the Dubai Legislation Portal. The Arabic text is the legally authoritative version.",
+    "sources": {
+      "law_26_2007": "https://dlp.dubai.gov.ae/Legislation%20Reference/2007/Law%20No.%20(26)%20of%202007.html",
+      "law_33_2008": "https://dlp.dubai.gov.ae/Legislation%20Reference/2009/Law%20No.%20(33)%20of%202008%20Amending%20Law%20No.%20(26)%20of%202007.html",
+      "decree_43_2013": "https://dlp.dubai.gov.ae/Legislation%20Reference/2013/Decree%20No.%20(43)%20of%202013%20Determining%20Rent%20Increase%20for%20Real%20Property.html"
+    }
+  },
+
+  "rent_increase_tiers": {
+    "instrument": "Decree No. (43) of 2013",
+    "article": "1",
+    "basis": "How far the current rent sits below the average rental value of similar units, per the Rent Index approved by RERA (Article 3).",
+    "tiers": [
+      { "min_pct_below": 0,  "max_pct_below": 10,   "max_increase_pct": 0,  "quote": "no Rent increase, where the Rent of the Real Property unit is up to ten percent (10%) less than the average rental value" },
+      { "min_pct_below": 11, "max_pct_below": 20,   "max_increase_pct": 5,  "quote": "five percent (5%) of the Rent of the Real Property unit, where the Rent is eleven percent (11%) to twenty percent (20%) less" },
+      { "min_pct_below": 21, "max_pct_below": 30,   "max_increase_pct": 10, "quote": "ten percent (10%) of the Rent of the Real Property unit, where the Rent is twenty-one percent (21%) to thirty percent (30%) less" },
+      { "min_pct_below": 31, "max_pct_below": 40,   "max_increase_pct": 15, "quote": "fifteen percent (15%) of the Rent of the Real Property unit, where the Rent is thirty-one percent (31%) to forty percent (40%) less" },
+      { "min_pct_below": 41, "max_pct_below": null, "max_increase_pct": 20, "quote": "twenty percent (20%) of the Rent of the Real Property Unit, where the Rent is more than forty percent (40%) less than the average rental value" }
+    ]
+  },
+
+  "provisions": [
+    {
+      "id": "decree-43-2013-art-2",
+      "instrument": "Decree No. (43) of 2013",
+      "article": "2",
+      "short_title": "Scope — includes free zones",
+      "quote": "This Decree will apply to Landlords, whether private or public entities, in the Emirate of Dubai, including those in Special Development zones and free zones",
+      "tenant_use": "Rebuts a landlord who claims the rent cap does not apply because the property sits in a free zone or special development zone."
+    },
+    {
+      "id": "decree-43-2013-art-3",
+      "instrument": "Decree No. (43) of 2013",
+      "article": "3",
+      "short_title": "Benchmark is RERA's Rent Index",
+      "quote": "the average rental value of similar units will be determined in accordance with the 'Rent Index of the Emirate of Dubai' approved by the Real Estate Regulatory Agency",
+      "tenant_use": "Establishes that the benchmark is not the landlord's opinion or a neighbouring listing price, but the official RERA index."
+    },
+    {
+      "id": "law-26-2007-art-6",
+      "instrument": "Law No. (26) of 2007",
+      "article": "6",
+      "short_title": "Automatic renewal on the same terms",
+      "quote": "Where the term of a Lease Contract expires, but the Tenant continues to occupy the Real Property without any objection by the Landlord, the Lease Contract will be renewed for the same term or for a term of one year, whichever is shorter, and under the same terms as the previous Lease Contract.",
+      "tenant_use": "If the landlord let the contract lapse without valid notice, it renews on the SAME terms — including the same rent."
+    },
+    {
+      "id": "law-26-2007-art-7",
+      "instrument": "Law No. (26) of 2007",
+      "article": "7",
+      "short_title": "No unilateral termination",
+      "quote": "Where a Lease Contract is valid, it may not be unilaterally terminated during its term by the Landlord or the Tenant. It can only be terminated by mutual consent or in accordance with the provisions of this Law.",
+      "tenant_use": "Flags any clause letting the landlord cancel the lease at will or on short notice mid-term."
+    },
+    {
+      "id": "law-26-2007-art-9",
+      "instrument": "Law No. (26) of 2007",
+      "article": "9",
+      "short_title": "Two-year freeze from the start of the relationship",
+      "quote": "Landlord and Tenant must specify the Rent in the Lease Contract. In any event, the Rent may not be increased nor may any of the terms of the Lease Contract be amended before the lapse of two years as of the date when the original contractual relationship was established.",
+      "tenant_use": "HIGH VALUE. If the tenancy began less than two years ago, NO increase is permitted at all, regardless of what the index says. Check the start date of the ORIGINAL relationship, not the current renewal."
+    },
+    {
+      "id": "law-26-2007-art-13",
+      "instrument": "Law No. (26) of 2007",
+      "article": "13",
+      "short_title": "Rent review on renewal",
+      "quote": "Subject to the provisions of Article (9) of this Law and for the purposes of renewing the Lease Contract, the Landlord and Tenant may review the Rent, and if they do not reach an agreement and it is proved necessary to extend the term of the Lease Contract, the Tribunal may decide on extending the Lease Contract and determine the Rent based on the average Rent of similar Real Property.",
+      "tenant_use": "Rent review is a negotiation, not a landlord decision. Disagreement goes to the Rental Disputes Centre, which uses the average for similar property."
+    },
+    {
+      "id": "law-33-2008-art-14",
+      "instrument": "Law No. (33) of 2008, replacing Article (14) of Law No. (26) of 2007",
+      "article": "14",
+      "short_title": "90 days' notice to change any term",
+      "quote": "where either party wishes to amend any of its terms pursuant to Article (13) of this Law, that party must notify the other party of this intent no less than ninety (90) days before the date on which the Lease Contract expires.",
+      "tenant_use": "HIGH VALUE. A rent increase is an amendment of terms. Notice served later than 90 days before expiry does not take effect for that renewal — see Article 6, the contract renews on the same terms. Note the parties may agree otherwise in the contract."
+    },
+    {
+      "id": "law-26-2007-art-16",
+      "instrument": "Law No. (26) of 2007",
+      "article": "16",
+      "short_title": "Landlord bears maintenance",
+      "quote": "Unless otherwise agreed by the parties, the Landlord will, during the term of the Lease Contract, be responsible for the Real Property maintenance works and for repairing any defect or damage that may affect the Tenant's intended use of the Real Property.",
+      "tenant_use": "Flags clauses dumping all maintenance on the tenant. Note the 'unless otherwise agreed' opener — this is a default rule the contract can vary, so report it as a point to negotiate, not as an automatic breach."
+    },
+    {
+      "id": "law-26-2007-art-17",
+      "instrument": "Law No. (26) of 2007",
+      "article": "17",
+      "short_title": "Landlord cannot impair the tenant's use",
+      "quote": "The Landlord may not make to the Real Property or any of its amenities or annexes any changes that would preclude the Tenant from full use of the Real Property as intended.",
+      "tenant_use": "Applies to withdrawn parking, closed amenities, or works that block normal use."
+    },
+    {
+      "id": "law-26-2007-art-20",
+      "instrument": "Law No. (26) of 2007",
+      "article": "20",
+      "short_title": "Security deposit must be refundable",
+      "quote": "When entering into a Lease Contract, the Landlord may obtain from the Tenant a security deposit to ensure maintenance of the Real Property upon the expiry of the Lease Contract, provided that the Landlord undertakes to refund such deposit or remainder thereof to the Tenant upon the expiry of the Lease Contract.",
+      "tenant_use": "Flags any clause describing the deposit as non-refundable. The law contemplates refund of the deposit or its remainder."
+    },
+    {
+      "id": "law-26-2007-art-21",
+      "instrument": "Law No. (26) of 2007",
+      "article": "21",
+      "short_title": "Fair wear and tear excluded on return",
+      "quote": "Upon the expiry of the term of the Lease Contract, the Tenant will must surrender possession of the Real Property to the Landlord in the same condition in which the Tenant received it at the time of entering into the Lease Contract except for ordinary wear and tear or for damage due to reasons beyond the Tenant's control.",
+      "tenant_use": "Flags clauses requiring the property be returned in 'as new' or 'pristine' condition, or making the tenant liable for ordinary wear.",
+      "quote_note": "The phrase 'will must' is a typo in the official published English translation and is reproduced here verbatim rather than silently corrected."
+    },
+    {
+      "id": "law-26-2007-art-22",
+      "instrument": "Law No. (26) of 2007",
+      "article": "22",
+      "short_title": "Government fees fall on the tenant by default",
+      "quote": "Unless the Lease Contract states otherwise, the Tenant must pay all fees and taxes due to Government entities and departments for use of the Real Property as well as any fees or taxes prescribed for any sub-lease.",
+      "tenant_use": "Included so the agent does NOT wrongly flag tenant-paid government fees as unlawful. This is the statutory default."
+    },
+    {
+      "id": "law-33-2008-art-25-notice",
+      "instrument": "Law No. (33) of 2008, replacing Article (25) of Law No. (26) of 2007",
+      "article": "25",
+      "short_title": "12 months' notarised notice to evict on expiry",
+      "quote": "the Landlord must notify the Tenant of the eviction reasons at least twelve (12) months before the date of eviction, and the notice must be served through a Notary Public or by registered mail.",
+      "tenant_use": "HIGH VALUE. Eviction on expiry — for demolition, major maintenance, owner's own use, or sale — requires twelve months' notice served via Notary Public or registered mail. A WhatsApp message or plain email does not satisfy this."
+    },
+    {
+      "id": "law-33-2008-art-25-grounds",
+      "instrument": "Law No. (33) of 2008, replacing Article (25) of Law No. (26) of 2007",
+      "article": "25",
+      "short_title": "Exhaustive eviction grounds",
+      "summary": "Grounds before expiry include: tenant failure to pay rent within 30 days of notice, unauthorized subletting, illegal use, leaving business premises vacant 30+ consecutive or 90+ non-consecutive days yearly, structural damage, improper use violating regulations, building collapse risk, breach of obligations within 30 days of notice, and government-mandated demolition. Grounds upon expiry: demolition/reconstruction, necessary major maintenance, owner's personal use or first-degree relatives' use (if owner has no alternative property), or owner's intent to sell the property.",
+      "quote_note": "SUMMARISED, not verbatim. The agent must not present this as a direct quotation and must point the tenant to the full text of Article 25 before relying on it.",
+      "tenant_use": "The grounds are a closed list. 'I want a higher-paying tenant' is not among them."
+    },
+    {
+      "id": "law-33-2008-art-26",
+      "instrument": "Law No. (33) of 2008, replacing Article (26) of Law No. (26) of 2007",
+      "article": "26",
+      "short_title": "Re-letting restriction after owner's-use eviction",
+      "summary": "Landlord cannot re-rent recovered property within 2 years (residential) or 3 years (non-residential) for personal use evictions; tenant may claim compensation otherwise.",
+      "quote_note": "SUMMARISED, not verbatim. Do not present as a direct quotation.",
+      "tenant_use": "If a tenant was evicted for the owner's 'personal use' and the unit is re-listed months later, compensation may be claimable."
+    }
+  ]
+}
