@@ -1,0 +1,54 @@
+{
+  "provenance": {
+    "source_kind": "indicative_market_reports",
+    "confidence": "low",
+    "snapshot_date": "2026-07-29",
+    "label": "Indicative market ranges, July 2026 — not DLD registered-contract data",
+    "description": "FALLBACK DATASET. These are broad indicative ranges compiled from public market commentary, not from DLD registered rental contracts and not from RERA's Smart Rental Index. They exist so the tool works end to end while the registered-contract snapshot is pending. Because confidence is 'low', the agent must return a RANGE verdict rather than a single legal-maximum figure, and must tell the tenant to confirm against the official index before acting.",
+    "sources": [
+      "https://letsprosper.ae/blogs/dubai-rental-benchmarks-2026",
+      "https://www.relodxb.com/blog/dubai-rent-prices-by-area-2026",
+      "https://sedubairealestate.com/blog/what-is-the-average-rent-for-dubai-apartments-in-2026"
+    ],
+    "replace_with": "Run scripts/build_benchmarks.py against a DLD registered-contracts CSV to regenerate this file with source_kind='dld_registered_contracts' and confidence='high'."
+  },
+
+  "currency": "AED",
+  "period": "annual",
+
+  "areas": {
+    "Dubai Marina":        { "studio": [55000, 75000],  "1br": [90000, 130000],  "2br": [130000, 190000], "3br": [190000, 280000] },
+    "Jumeirah Beach Residence": { "studio": [60000, 80000], "1br": [95000, 140000], "2br": [140000, 210000], "3br": [200000, 300000] },
+    "Downtown Dubai":      { "studio": [65000, 85000],  "1br": [95000, 145000],  "2br": [140000, 210000], "3br": [210000, 320000] },
+    "Business Bay":        { "studio": [50000, 70000],  "1br": [75000, 110000],  "2br": [115000, 170000], "3br": [170000, 250000] },
+    "Palm Jumeirah":       { "studio": [80000, 110000], "1br": [130000, 190000], "2br": [200000, 300000], "3br": [300000, 450000] },
+    "Jumeirah Lake Towers": { "studio": [45000, 62000], "1br": [70000, 100000],  "2br": [105000, 155000], "3br": [150000, 220000] },
+    "The Greens":          { "studio": [48000, 65000],  "1br": [75000, 105000],  "2br": [110000, 160000], "3br": [155000, 220000] },
+    "Jumeirah Village Circle": { "studio": [38000, 52000], "1br": [58000, 82000], "2br": [85000, 125000], "3br": [120000, 175000] },
+    "Arjan":               { "studio": [36000, 50000],  "1br": [55000, 78000],   "2br": [80000, 118000],  "3br": [115000, 165000] },
+    "Dubai Sports City":   { "studio": [34000, 47000],  "1br": [50000, 72000],   "2br": [75000, 110000],  "3br": [105000, 150000] },
+    "Dubai Silicon Oasis": { "studio": [33000, 46000],  "1br": [48000, 70000],   "2br": [72000, 105000],  "3br": [100000, 145000] },
+    "Discovery Gardens":   { "studio": [32000, 45000],  "1br": [48000, 68000],   "2br": [70000, 100000],  "3br": null },
+    "Al Barsha":           { "studio": [40000, 55000],  "1br": [60000, 88000],   "2br": [90000, 135000],  "3br": [130000, 190000] },
+    "Deira":               { "studio": [28000, 42000],  "1br": [42000, 62000],   "2br": [62000, 92000],   "3br": [88000, 130000] },
+    "Mirdif":              { "studio": [32000, 45000],  "1br": [48000, 70000],   "2br": [75000, 110000],  "3br": [105000, 155000] },
+    "Town Square":         { "studio": [33000, 46000],  "1br": [50000, 70000],   "2br": [72000, 105000],  "3br": [100000, 145000] },
+    "International City":  { "studio": [24000, 35000],  "1br": [35000, 52000],   "2br": [52000, 78000],   "3br": null },
+    "Dubai Hills Estate":  { "studio": [50000, 68000],  "1br": [78000, 112000],  "2br": [120000, 175000], "3br": [175000, 260000] }
+  },
+
+  "aliases": {
+    "Marina": "Dubai Marina",
+    "JBR": "Jumeirah Beach Residence",
+    "Downtown": "Downtown Dubai",
+    "JLT": "Jumeirah Lake Towers",
+    "JVC": "Jumeirah Village Circle",
+    "DSO": "Dubai Silicon Oasis",
+    "Silicon Oasis": "Dubai Silicon Oasis",
+    "Sports City": "Dubai Sports City",
+    "Greens": "The Greens",
+    "Palm": "Palm Jumeirah",
+    "Dubai Hills": "Dubai Hills Estate",
+    "Barsha": "Al Barsha"
+  }
+}
