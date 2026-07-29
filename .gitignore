@@ -1,0 +1,24 @@
+# Secrets — never commit
+.streamlit/secrets.toml
+.env
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Real contracts — only redacted samples belong in this repo
+samples/private/
+*.private.pdf
+
+# Raw DLD downloads (derived snapshot is committed, raw dumps are not)
+data/raw/
+
+# OS
+.DS_Store
