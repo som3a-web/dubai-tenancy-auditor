@@ -63,6 +63,13 @@ labels them differently.
   official calculator. Decree 43's *tiers* do not change; only the number they're applied to.
 - Always verify against the official Smart Rental Index via Dubai REST or dubailand.gov.ae before acting.
 
+**One documented interpretation.** Article 1 states its bands in whole percentages — "up to ten percent",
+then "eleven percent to twenty percent" — so a gap of, say, 10.5% falls in a textual gap the decree does not
+address. We take the **floor** of the gap, which yields the lower permitted increase. Rationale: if we report
+0% and the true answer is 5%, the tenant queries it and the landlord produces the index and nobody loses
+money; if we report 5% and the true answer is 0%, the tenant pays rent they never owed. This is our reading,
+not a provision of the decree, and it is labelled as such wherever it affects a verdict.
+
 **This is guidance, not legal advice.** It is not a substitute for a lawyer or for the Rental Disputes Centre.
 
 ## Running it locally
