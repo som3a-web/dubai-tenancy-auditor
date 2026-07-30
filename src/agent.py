@@ -191,7 +191,14 @@ def run(
             "Article 9 and the notice rule → check clauses against the verified "
             "corpus → draft negotiating points."
         ),
-        payload={"provider": message, "model": backend.model},
+        # `provider` is the short name ("gemini"); the human sentence goes in
+        # provider_message. Conflating them once produced a banner reading
+        # "using Using Google Gemini (...) on the free tier. (gemini-flash-latest)".
+        payload={
+            "provider": backend.name,
+            "provider_message": message,
+            "model": backend.model,
+        },
     )
 
     for iteration in range(1, max_iterations + 1):

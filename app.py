@@ -74,7 +74,7 @@ def render_legal_basis() -> None:
         )
 
 
-def render_footer() -> None:
+def render_footer(active_model: str | None = None) -> None:
     st.divider()
     prov = legal.load_benchmarks()["provenance"]
     st.caption(
@@ -85,7 +85,7 @@ def render_footer() -> None:
     )
     st.caption(
         f"Benchmark data: {prov['label']} · confidence **{prov['confidence']}** — "
-        f"v{__version__} · model `{config.MODEL}` · "
+        f"v{__version__} · model `{active_model or 'none configured'}` · "
         f"{config.active_provider_summary()}"
     )
 
@@ -170,12 +170,13 @@ def render_run(steps, replay_meta: dict | None = None) -> None:
     st.divider()
 
     if replay_meta:
+        recorded = str(replay_meta.get("recorded_at", ""))[:16].replace("T", " ")
         st.info(
-            f"**Replay — no API call was made.** This is a recording of a real "
-            f"audit run on {replay_meta.get('recorded_at', 'an earlier date')} "
-            f"using {replay_meta.get('provider', 'the configured provider')} "
-            f"(`{replay_meta.get('model', '?')}`). The steps below are exactly "
-            "what the agent produced that run."
+            f"**Replay — no API call was made.** These are the exact steps a real "
+            f"audit produced on {recorded or 'an earlier run'}, using "
+            f"`{replay_meta.get('model', 'the configured model')}`. Nothing here "
+            "is simulated; the run is replayed from a recording so the demo works "
+            "without spending API quota."
         )
 
     verdict_slot = st.empty()
@@ -346,7 +347,7 @@ def main() -> None:
         render_run(replay.replay(recording_path), replay_meta=replay.metadata(recording_path))
 
     render_legal_basis()
-    render_footer()
+    render_footer(active_model=backend.model if backend else None)
 
 
 if __name__ == "__main__":
