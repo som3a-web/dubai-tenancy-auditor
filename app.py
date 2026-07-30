@@ -12,7 +12,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from src import __version__, agent, config, legal, llm, tools
+from src import __version__, agent, config, legal, llm, replay, tools
 from src.agent import StepKind
 
 SAMPLES_DIR = Path(__file__).parent / "samples"
@@ -161,8 +161,23 @@ def render_verdict(slot, payload: dict) -> None:
 # --------------------------------------------------------------------------
 
 
-def render_run(pdf_bytes: bytes, filename: str) -> None:
+def render_run(steps, replay_meta: dict | None = None) -> None:
+    """Render a run's steps. Identical for a live audit and a replay.
+
+    `replay_meta` is set only when replaying, and is displayed prominently — a
+    recording must never be mistaken for a live run.
+    """
     st.divider()
+
+    if replay_meta:
+        st.info(
+            f"**Replay — no API call was made.** This is a recording of a real "
+            f"audit run on {replay_meta.get('recorded_at', 'an earlier date')} "
+            f"using {replay_meta.get('provider', 'the configured provider')} "
+            f"(`{replay_meta.get('model', '?')}`). The steps below are exactly "
+            "what the agent produced that run."
+        )
+
     verdict_slot = st.empty()
     st.subheader("What the agent did")
 
@@ -170,7 +185,7 @@ def render_run(pdf_bytes: bytes, filename: str) -> None:
     verdict_payload: dict | None = None
     final_text: list[str] = []
 
-    for step in agent.run(pdf_bytes, filename=filename, today=date.today()):
+    for step in steps:
         if step.kind is StepKind.PLAN:
             st.caption(f"**Plan** — {step.body}")
 
@@ -287,6 +302,7 @@ def main() -> None:
             st.caption("No samples found in this deployment.")
 
     contract = st.session_state.get("contract")
+    filename = None
     if contract is not None:
         pdf_bytes, filename = contract
         st.success(
@@ -294,9 +310,40 @@ def main() -> None:
             "press the button below."
         )
 
-    disabled = contract is None or backend is None
-    if st.button("Audit my contract", type="primary", disabled=disabled):
-        render_run(*contract)
+    recordings = replay.available()
+    recording_path = recordings.get(filename) if filename else None
+
+    live_column, replay_column = st.columns([2, 3])
+
+    with live_column:
+        live_clicked = st.button(
+            "Audit my contract",
+            type="primary",
+            disabled=contract is None or backend is None,
+        )
+
+    with replay_column:
+        replay_clicked = st.button(
+            "Replay a recorded audit",
+            disabled=recording_path is None,
+            help=(
+                "Replays a previously recorded real run with no API call. Useful "
+                "when the free-tier rate limit is hit."
+                if recording_path
+                else "No recording exists for this contract yet."
+            ),
+        )
+
+    if backend is None and recording_path is not None:
+        st.info(
+            "No API key is configured, but a recorded audit exists for this "
+            "contract — you can still replay it."
+        )
+
+    if live_clicked and contract is not None:
+        render_run(agent.run(*contract, today=date.today()))
+    elif replay_clicked and recording_path is not None:
+        render_run(replay.replay(recording_path), replay_meta=replay.metadata(recording_path))
 
     render_legal_basis()
     render_footer()
