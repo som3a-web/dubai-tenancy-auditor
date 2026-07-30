@@ -193,6 +193,71 @@ def max_increase_for_gap(pct_below: float) -> tuple[int, str]:
     return int(chosen["max_increase_pct"]), chosen["quote"]
 
 
+MINIMUM_NOTICE_DAYS = 90
+
+
+@dataclass(frozen=True)
+class NoticeCheck:
+    determinable: bool
+    days_given: int | None = None
+    compliant: bool | None = None
+    reason: str = ""
+    citation: str = "law-33-2008-art-14"
+
+
+def notice_compliance(
+    notice_served: date | None,
+    contract_expiry: date | None,
+) -> NoticeCheck:
+    """Check the 90-day notice requirement in Article 14 (as replaced in 2008).
+
+    Article 14 requires the party seeking to amend any term - a rent increase is
+    an amendment - to notify the other at least 90 days before the contract
+    expires. Where notice is short, the amendment does not take effect for that
+    renewal and Article 6 renews the contract on the same terms.
+
+    Article 14 lets the parties agree a different notice period in the contract,
+    so a short-notice finding is reported as a likely breach to raise, not a
+    certainty. The caller must surface that caveat.
+    """
+    if notice_served is None or contract_expiry is None:
+        missing = "notice date" if notice_served is None else "contract expiry date"
+        return NoticeCheck(
+            determinable=False,
+            reason=f"The {missing} could not be read from the contract, so the "
+            "90-day notice requirement cannot be checked.",
+        )
+
+    days = (contract_expiry - notice_served).days
+
+    if days < 0:
+        return NoticeCheck(
+            determinable=True,
+            days_given=days,
+            compliant=False,
+            reason="The notice is dated after the contract expiry date.",
+        )
+
+    compliant = days >= MINIMUM_NOTICE_DAYS
+    if compliant:
+        reason = (
+            f"Notice was served {days} days before expiry, meeting the 90-day "
+            "minimum in Article 14."
+        )
+    else:
+        reason = (
+            f"Notice was served only {days} days before expiry, short of the 90 "
+            "days Article 14 requires. On that basis the increase does not take "
+            "effect for this renewal and Article 6 renews the contract on the "
+            "same terms. Note Article 14 permits the parties to agree a "
+            "different notice period in the contract, so check clause wording "
+            "before relying on this."
+        )
+    return NoticeCheck(
+        determinable=True, days_given=days, compliant=compliant, reason=reason
+    )
+
+
 def two_year_anniversary(start: date) -> date:
     """The date Article 9's two-year freeze expires. Handles 29 February."""
     try:

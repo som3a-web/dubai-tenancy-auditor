@@ -261,6 +261,108 @@ class TestAssess(unittest.TestCase):
         self.assertIsNone(v.two_year_date)
 
 
+class TestNoticeCompliance(unittest.TestCase):
+    """Article 14 as replaced by Law 33/2008 — the 90-day notice rule."""
+
+    def test_exactly_ninety_days_is_compliant(self):
+        check = legal.notice_compliance(date(2026, 6, 2), date(2026, 8, 31))
+        self.assertEqual(check.days_given, 90)
+        self.assertTrue(check.compliant)
+
+    def test_eighty_nine_days_is_not_compliant(self):
+        check = legal.notice_compliance(date(2026, 6, 3), date(2026, 8, 31))
+        self.assertEqual(check.days_given, 89)
+        self.assertFalse(check.compliant)
+
+    def test_short_notice_explains_article_6_consequence(self):
+        check = legal.notice_compliance(date(2026, 7, 1), date(2026, 9, 15))
+        self.assertEqual(check.days_given, 76)
+        self.assertFalse(check.compliant)
+        self.assertIn("Article 6", check.reason)
+
+    def test_short_notice_discloses_contractual_variation(self):
+        # Article 14 lets parties agree otherwise; we must not overstate.
+        check = legal.notice_compliance(date(2026, 7, 1), date(2026, 9, 15))
+        self.assertIn("different notice period", check.reason)
+
+    def test_notice_after_expiry_is_flagged(self):
+        check = legal.notice_compliance(date(2026, 10, 1), date(2026, 9, 15))
+        self.assertTrue(check.determinable)
+        self.assertFalse(check.compliant)
+        self.assertIn("after the contract expiry", check.reason)
+
+    def test_missing_dates_are_not_determinable(self):
+        self.assertFalse(legal.notice_compliance(None, date(2026, 9, 15)).determinable)
+        self.assertFalse(legal.notice_compliance(date(2026, 7, 1), None).determinable)
+        self.assertIn(
+            "notice date", legal.notice_compliance(None, date(2026, 9, 15)).reason
+        )
+
+    def test_citation_points_at_the_verified_provision(self):
+        check = legal.notice_compliance(date(2026, 7, 1), date(2026, 9, 15))
+        self.assertIsNotNone(legal.provision(check.citation))
+
+
+class TestSampleContracts(unittest.TestCase):
+    """The three demo fixtures must produce the verdicts the demo claims.
+
+    If a sample silently stops demonstrating its point, the demo breaks on
+    stage. These assertions are the early warning.
+    """
+
+    AS_OF = date(2026, 7, 30)
+
+    def test_sample_1_marina_is_a_firm_zero_percent(self):
+        v = legal.assess(
+            117_000, "Dubai Marina", "1br",
+            tenancy_start=date(2023, 9, 1), assessment_date=self.AS_OF,
+        )
+        self.assertTrue(v.determinable)
+        self.assertFalse(v.article_9_blocks_increase)
+        self.assertTrue(v.is_single_figure, "headline case must be unambiguous")
+        self.assertEqual(v.permitted_increase_pct, 0)
+
+    def test_sample_1_notice_timing_is_compliant(self):
+        # The defect in sample 1 is the amount, not the timing.
+        check = legal.notice_compliance(date(2026, 5, 15), date(2026, 8, 31))
+        self.assertTrue(check.compliant)
+
+    def test_sample_2_jvc_is_blocked_by_article_9(self):
+        v = legal.assess(
+            42_000, "Jumeirah Village Circle", "studio",
+            tenancy_start=date(2025, 6, 1), assessment_date=self.AS_OF,
+        )
+        self.assertTrue(v.article_9_blocks_increase)
+        self.assertEqual(v.permitted_increase_pct, 0)
+        self.assertIn("law-26-2007-art-9", v.citations)
+
+    def test_sample_2_override_beats_a_nonzero_tier(self):
+        """Article 9 must be doing real work here, not agreeing with the tier."""
+        v = legal.assess(
+            42_000, "Jumeirah Village Circle", "studio",
+            tenancy_start=date(2025, 6, 1), assessment_date=self.AS_OF,
+        )
+        self.assertGreater(
+            v.max_increase_high, 0,
+            "if the tier table alone said 0%, this sample would not demonstrate "
+            "the override",
+        )
+
+    def test_sample_3_deira_has_no_firm_tier_so_notice_decides(self):
+        v = legal.assess(
+            68_000, "Deira", "2br",
+            tenancy_start=date(2021, 9, 16), assessment_date=self.AS_OF,
+        )
+        self.assertTrue(v.determinable)
+        self.assertFalse(v.article_9_blocks_increase)
+        self.assertIsNone(v.permitted_increase_pct, "sample 3 is a range case")
+
+    def test_sample_3_notice_is_short(self):
+        check = legal.notice_compliance(date(2026, 7, 1), date(2026, 9, 15))
+        self.assertFalse(check.compliant)
+        self.assertEqual(check.days_given, 76)
+
+
 class TestCorpusIntegrity(unittest.TestCase):
     """The corpus is the anti-hallucination backbone; guard its shape."""
 
