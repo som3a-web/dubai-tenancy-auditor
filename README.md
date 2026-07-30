@@ -124,9 +124,25 @@ The agent loop has a hard iteration cap and a per-run token ceiling that fails l
 silently retrying. Uploaded contracts are held in memory for the duration of the request and are not
 persisted.
 
+## Reliability
+
+The demo path does not depend on a live API call. Every sample has a **recorded
+real run** committed to `samples/recordings/`, replayable through the identical
+interface at zero cost — the free-tier quota is per model per day, and a rate
+limit during a demo would otherwise leave nothing to show. Replays are labelled
+as replays in the UI and carry the date and model they were recorded against.
+Recordings are only ever produced from genuine runs; `scripts/record_audit.py`
+writes nothing if a run fails.
+
+The backend also rotates between models when one is rate-limited or unavailable,
+since each has its own quota.
+
 ## Built for
 
 The Agentic AI Demo Challenge — Decoding Data Science, Dubai.
+
+See [`docs/PITCH.md`](docs/PITCH.md) for the demo script and
+[`docs/SUBMISSION.md`](docs/SUBMISSION.md) for the submission text.
 
 ## Licence
 
