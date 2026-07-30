@@ -12,7 +12,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from src import __version__, agent, config, legal
+from src import __version__, agent, config, legal, llm, tools
 from src.agent import StepKind
 
 SAMPLES_DIR = Path(__file__).parent / "samples"
@@ -86,7 +86,7 @@ def render_footer() -> None:
     st.caption(
         f"Benchmark data: {prov['label']} · confidence **{prov['confidence']}** — "
         f"v{__version__} · model `{config.MODEL}` · "
-        f"API key: {config.api_key_status()[0]}"
+        f"{config.active_provider_summary()}"
     )
 
 
@@ -247,14 +247,15 @@ def main() -> None:
     render_header()
     st.divider()
 
-    key_status, key_message = config.api_key_status()
-    if key_status != "present":
+    backend, provider_message = llm.build_backend(tools.TOOL_SCHEMAS)
+    if backend is None:
         st.error(
-            f"**API key problem.** {key_message}\n\n"
-            "Set a real `ANTHROPIC_API_KEY` in Streamlit secrets "
-            "(Manage app → Settings → Secrets), then wait about a minute for it "
-            "to propagate."
+            f"**No usable API key.** {provider_message}\n\n"
+            "Set it in Streamlit secrets (Manage app → Settings → Secrets), then "
+            "wait about a minute for it to propagate."
         )
+    else:
+        st.caption(f"⚙️ {provider_message}")
 
     samples = sample_options()
     tab_upload, tab_sample = st.tabs(["Upload your contract", "Try a sample"])
@@ -293,7 +294,7 @@ def main() -> None:
             "press the button below."
         )
 
-    disabled = contract is None or key_status != "present"
+    disabled = contract is None or backend is None
     if st.button("Audit my contract", type="primary", disabled=disabled):
         render_run(*contract)
 

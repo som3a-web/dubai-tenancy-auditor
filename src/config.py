@@ -10,6 +10,10 @@ import os
 
 MODEL = "claude-opus-5"
 
+# Free tier, no billing setup required. The backend confirms this model exists
+# at runtime and falls back to another Flash model if Google has renamed it.
+GEMINI_MODEL = "gemini-2.5-flash"
+
 # Hard ceilings. The agent loop aborts loudly when either is exceeded rather
 # than retrying — a runaway loop at 3am is how you lose the API budget.
 DEFAULT_MAX_TOKENS_PER_RUN = 250_000
@@ -95,6 +99,24 @@ def _int_secret(name: str, default: int) -> int:
         return int(raw)
     except ValueError:
         return default
+
+
+def gemini_api_key() -> str | None:
+    """Google AI Studio key. Free tier, no billing required."""
+    key = _secret("GEMINI_API_KEY") or _secret("GOOGLE_API_KEY")
+    return key.strip().strip("\"'") if key else None
+
+
+def provider() -> str:
+    """Which backend to use: 'auto' (default), 'gemini', or 'anthropic'."""
+    return (_secret("LLM_PROVIDER") or "auto").strip().lower()
+
+
+def active_provider_summary() -> str:
+    """One-line description of the credentials situation, for the footer."""
+    gemini = "set" if gemini_api_key() else "not set"
+    status, _ = api_key_status()
+    return f"Gemini key {gemini} · Anthropic key {status}"
 
 
 def max_tokens_per_run() -> int:

@@ -1,31 +1,30 @@
-"""The audit agent: a hand-written tool-use loop over Claude Opus 5.
+"""The audit agent: a hand-written tool-use loop, provider-agnostic.
 
-Hand-written rather than using the SDK's tool runner, for one reason: every
+Hand-written rather than using an SDK's tool runner, for one reason: every
 intermediate step has to be renderable. The loop yields a Step for each thinking
-block, tool call, and tool result as it happens, so the UI can show the agent
+block, tool call and tool result as it happens, so the UI can show the agent
 working instead of a spinner followed by an answer.
 
-Cost ceilings are enforced here and fail loudly. An agent loop that quietly
-retries is how you wake up to an empty API budget.
+The model is reached through src.llm, so Anthropic and Gemini share this loop,
+the tools, the legal engine and the UI. Cost ceilings are enforced here and fail
+loudly — an agent loop that quietly retries is how you exhaust an API budget.
 """
 
 from __future__ import annotations
 
-import base64
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import date
 from enum import Enum
-from typing import Any
 
-import anthropic
+from src import config, legal, llm, tools
 
-from src import config, legal, tools
-
-# Opus 5 list price, US dollars per million tokens.
-COST_PER_MTOK_INPUT = 5.00
-COST_PER_MTOK_OUTPUT = 25.00
-COST_PER_MTOK_CACHE_READ = 0.50
+# Anthropic list price, US dollars per million tokens. Gemini's free tier is
+# reported as zero rather than estimated.
+COST_PER_MTOK = {
+    "anthropic": {"input": 5.00, "output": 25.00, "cache_read": 0.50},
+    "gemini": {"input": 0.0, "output": 0.0, "cache_read": 0.0},
+}
 
 
 class StepKind(str, Enum):
@@ -54,6 +53,7 @@ class Step:
 
 @dataclass
 class Usage:
+    provider: str = "anthropic"
     input_tokens: int = 0
     output_tokens: int = 0
     cache_read_tokens: int = 0
@@ -65,10 +65,11 @@ class Usage:
 
     @property
     def estimated_cost_usd(self) -> float:
+        rates = COST_PER_MTOK.get(self.provider, COST_PER_MTOK["anthropic"])
         return (
-            self.input_tokens / 1_000_000 * COST_PER_MTOK_INPUT
-            + self.output_tokens / 1_000_000 * COST_PER_MTOK_OUTPUT
-            + self.cache_read_tokens / 1_000_000 * COST_PER_MTOK_CACHE_READ
+            self.input_tokens / 1_000_000 * rates["input"]
+            + self.output_tokens / 1_000_000 * rates["output"]
+            + self.cache_read_tokens / 1_000_000 * rates["cache_read"]
         )
 
 
@@ -113,7 +114,8 @@ rent, and they need to know whether that is lawful and what to say about it.
 
 Call the tools in this order, once each: parse_contract, lookup_benchmark, \
 calculate_legal_max, check_clauses, generate_talking_points. Read each result \
-before deciding the next call.
+before deciding the next call. After the final tool, write your answer to the \
+tenant in plain prose.
 
 # Rules you do not break
 
@@ -154,70 +156,32 @@ not legal advice, and you should not pretend otherwise.
 {corpus}"""
 
 
-class BudgetExceeded(RuntimeError):
-    """Raised when a run exceeds its token or iteration ceiling."""
-
-
 def run(
     pdf_bytes: bytes,
     filename: str = "contract.pdf",
     today: date | None = None,
-    api_key: str | None = None,
 ) -> Iterator[Step]:
-    """Audit one contract, yielding a Step per observable event.
-
-    Raises BudgetExceeded rather than silently continuing past a ceiling.
-    """
-    key = api_key or config.anthropic_api_key()
-    if not key:
-        yield Step(
-            kind=StepKind.ERROR,
-            title="No API key configured",
-            body="Set ANTHROPIC_API_KEY in Streamlit secrets or the environment.",
-            is_error=True,
-        )
+    """Audit one contract, yielding a Step per observable event."""
+    backend, message = llm.build_backend(tools.TOOL_SCHEMAS)
+    if backend is None:
+        yield Step(kind=StepKind.ERROR, title="No usable API key", body=message, is_error=True)
         return
 
-    client = anthropic.Anthropic(api_key=key)
-    usage = Usage()
+    usage = Usage(provider=backend.name)
     max_tokens_budget = config.max_tokens_per_run()
     max_iterations = config.max_agent_iterations()
     assessment_date = (today or date.today()).isoformat()
 
-    system = [
-        {
-            "type": "text",
-            "text": SYSTEM_PROMPT.format(corpus=_corpus_for_prompt()),
-            # Stable across every run, so cache it: the corpus is most of the
-            # prompt and re-paying for it each audit is pure waste.
-            "cache_control": {"type": "ephemeral"},
-        }
-    ]
-
-    messages: list[dict[str, Any]] = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "document",
-                    "source": {
-                        "type": "base64",
-                        "media_type": "application/pdf",
-                        "data": base64.standard_b64encode(pdf_bytes).decode(),
-                    },
-                    "title": filename,
-                },
-                {
-                    "type": "text",
-                    "text": (
-                        f"Today's date is {assessment_date}. Audit this tenancy "
-                        "contract. Work through the five tools in order, then give "
-                        "the tenant their verdict and what to say."
-                    ),
-                },
-            ],
-        }
-    ]
+    backend.begin(
+        system=SYSTEM_PROMPT.format(corpus=_corpus_for_prompt()),
+        pdf_bytes=pdf_bytes,
+        filename=filename,
+        prompt=(
+            f"Today's date is {assessment_date}. Audit this tenancy contract. "
+            "Work through the five tools in order, then give the tenant their "
+            "verdict and what to say."
+        ),
+    )
 
     yield Step(
         kind=StepKind.PLAN,
@@ -227,6 +191,7 @@ def run(
             "Article 9 and the notice rule → check clauses against the verified "
             "corpus → draft negotiating points."
         ),
+        payload={"provider": message, "model": backend.model},
     )
 
     for iteration in range(1, max_iterations + 1):
@@ -245,73 +210,45 @@ def run(
             return
 
         try:
-            response = client.messages.create(
-                model=config.MODEL,
-                max_tokens=16_000,
-                system=system,
-                messages=messages,
-                tools=tools.TOOL_SCHEMAS,
-                thinking={"type": "adaptive", "display": "summarized"},
-                output_config={"effort": "high"},
-            )
-        except anthropic.APIStatusError as exc:
+            turn = backend.next_turn()
+        except Exception as exc:  # noqa: BLE001 - every provider raises differently
             yield Step(
                 kind=StepKind.ERROR,
-                title=f"API error {exc.status_code}",
-                body=str(exc.message),
-                is_error=True,
-            )
-            return
-        except anthropic.APIConnectionError:
-            yield Step(
-                kind=StepKind.ERROR,
-                title="Connection failed",
-                body="Could not reach the API. Check the network and try again.",
+                title=f"{type(exc).__name__} from {backend.name}",
+                body=_explain_error(exc, backend.name),
                 is_error=True,
             )
             return
 
-        if response.usage:
-            usage.input_tokens += response.usage.input_tokens or 0
-            usage.output_tokens += response.usage.output_tokens or 0
-            usage.cache_read_tokens += getattr(response.usage, "cache_read_input_tokens", 0) or 0
+        usage.input_tokens += turn.input_tokens
+        usage.output_tokens += turn.output_tokens
+        usage.cache_read_tokens += turn.cache_read_tokens
 
-        # Opus 5 can decline via a successful response, so check before reading
-        # content — indexing content[0] on a refusal would crash.
-        if response.stop_reason == "refusal":
-            detail = getattr(response, "stop_details", None)
+        if turn.refused:
             yield Step(
                 kind=StepKind.REFUSED,
                 title="The model declined this request",
                 body=(
-                    "The safety classifiers declined to process this document"
-                    + (f" (category: {detail.category})" if detail and detail.category else "")
+                    "The safety filters declined to process this document"
+                    + (f" ({turn.refusal_detail})" if turn.refusal_detail else "")
                     + ". If this is a genuine tenancy contract, please report it."
                 ),
                 is_error=True,
             )
             return
 
-        for block in response.content:
-            if block.type == "thinking" and getattr(block, "thinking", ""):
-                yield Step(
-                    kind=StepKind.THINKING,
-                    title="Reasoning",
-                    body=block.thinking,
-                    iteration=iteration,
-                )
-            elif block.type == "text" and block.text.strip():
-                yield Step(
-                    kind=StepKind.TEXT,
-                    body=block.text,
-                    iteration=iteration,
-                )
+        for thought in turn.thinking:
+            yield Step(kind=StepKind.THINKING, title="Reasoning", body=thought, iteration=iteration)
+        for text in turn.text:
+            yield Step(kind=StepKind.TEXT, body=text, iteration=iteration)
 
-        if response.stop_reason != "tool_use":
+        if not turn.wants_tools:
             yield Step(
                 kind=StepKind.DONE,
                 title="Audit complete",
                 payload={
+                    "provider": backend.name,
+                    "model": backend.model,
                     "iterations": usage.iterations,
                     "total_tokens": usage.total_tokens,
                     "estimated_cost_usd": round(usage.estimated_cost_usd, 4),
@@ -319,56 +256,64 @@ def run(
             )
             return
 
-        messages.append({"role": "assistant", "content": response.content})
-
-        tool_results = []
-        for block in response.content:
-            if block.type != "tool_use":
-                continue
-
+        outcomes = []
+        for call in turn.tool_calls:
             yield Step(
                 kind=StepKind.TOOL_CALL,
-                title=block.name,
-                tool_name=block.name,
-                payload=dict(block.input),
+                title=call.name,
+                tool_name=call.name,
+                payload=call.args,
                 iteration=iteration,
             )
-
-            result = tools.execute(block.name, dict(block.input))
-
+            result = tools.execute(call.name, call.args)
             yield Step(
                 kind=StepKind.TOOL_RESULT,
-                title=block.name,
-                tool_name=block.name,
+                title=call.name,
+                tool_name=call.name,
                 payload=result.payload,
                 display=result.display,
                 is_error=result.is_error,
                 iteration=iteration,
             )
-
-            tool_results.append(
-                {
-                    "type": "tool_result",
-                    "tool_use_id": block.id,
-                    "content": _as_text(result.payload),
-                    "is_error": result.is_error,
-                }
+            outcomes.append(
+                llm.ToolOutcome(call=call, payload=result.payload, is_error=result.is_error)
             )
 
-        messages.append({"role": "user", "content": tool_results})
+        backend.submit_tool_results(outcomes)
 
     yield Step(
         kind=StepKind.ABORTED,
         title="Iteration ceiling reached",
         body=(
-            f"The agent used all {max_iterations} permitted steps without "
-            "finishing. Stopped rather than looping further."
+            f"The agent used all {max_iterations} permitted steps without finishing. "
+            "Stopped rather than looping further."
         ),
         is_error=True,
     )
 
 
-def _as_text(payload: dict) -> str:
-    import json
+def _explain_error(exc: Exception, provider: str) -> str:
+    """Turn a provider exception into something a tenant-facing UI can show."""
+    text = str(exc)
+    lowered = text.lower()
 
-    return json.dumps(payload, indent=2, default=str)
+    if "429" in text or "resource_exhausted" in lowered or "rate limit" in lowered:
+        return (
+            "The provider's rate limit was hit. On the Gemini free tier this is "
+            "usually a few requests per minute — wait a moment and try again."
+            if provider == "gemini"
+            else "Rate limited. Wait a moment and try again."
+        )
+    if "401" in text or "api key" in lowered or "unauthenticated" in lowered:
+        return (
+            "The API key was rejected. Check it is a real key, not a placeholder, "
+            "and that it is set in Streamlit secrets."
+        )
+    if "credit" in lowered or "billing" in lowered or "quota" in lowered:
+        return "The account has no available credit or quota for this request."
+    if "not_found" in lowered or "404" in text:
+        return (
+            f"The configured model was not found for this account ({text[:160]}). "
+            "The provider may have renamed it."
+        )
+    return text[:400]

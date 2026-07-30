@@ -83,17 +83,40 @@ cp .streamlit/secrets.toml.example .streamlit/secrets.toml   # then add your key
 streamlit run app.py
 ```
 
-You need an [Anthropic API key](https://console.anthropic.com/). Put it in `.streamlit/secrets.toml` as
-`ANTHROPIC_API_KEY`, or export it as an environment variable. **Never commit it** — `.streamlit/secrets.toml`
-is gitignored.
+You need **one** API key, either:
+
+- **`GEMINI_API_KEY`** — free, instant, no billing, from [Google AI Studio](https://aistudio.google.com/apikey). Recommended.
+- **`ANTHROPIC_API_KEY`** — from [the Claude console](https://platform.claude.com/). Requires prepaid credit.
+
+Put it in `.streamlit/secrets.toml`, or export it as an environment variable. **Never commit it** —
+`.streamlit/secrets.toml` is gitignored.
+
+### Tests
+
+```bash
+python -m unittest discover -s tests
+```
+
+The legal engine, tool handlers and provider selection are covered. No test makes a paid API call.
 
 ## Stack
 
-Python 3.11 · [Streamlit](https://streamlit.io) · [Claude Opus 5](https://platform.claude.com) via the
-Anthropic SDK, with a hand-written tool-use loop so every intermediate step can be rendered.
+Python 3.11 · [Streamlit](https://streamlit.io) · a hand-written tool-use loop so every intermediate step
+can be rendered.
 
-Contracts are read through Claude's native PDF input, which handles both digital and scanned documents —
-no separate OCR stage.
+**Two model providers are supported**, selected by whichever key is configured:
+
+| Provider | Model | Cost | Notes |
+|---|---|---|---|
+| Google Gemini | `gemini-2.5-flash` | Free tier | Default. No billing setup; key from [AI Studio](https://aistudio.google.com/apikey) |
+| Anthropic | `claude-opus-5` | Prepaid credit | Used if `ANTHROPIC_API_KEY` is set and `LLM_PROVIDER=anthropic` |
+
+Only `src/llm.py` is provider-specific. The legal engine, the tools, the tool loop and the UI are shared,
+so switching providers changes no logic that affects a verdict.
+
+Contracts are read through the model's native PDF input, which handles both digital and scanned documents —
+no separate OCR stage. That capability is why the provider choice was constrained: one of the sample
+contracts is image-only, with no text layer at all.
 
 ## Cost controls
 
