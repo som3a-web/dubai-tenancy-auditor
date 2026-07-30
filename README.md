@@ -4,7 +4,7 @@
 tells you the legal maximum increase under Dubai law, which clauses in your contract conflict with that
 law, and what to say when you push back.
 
-🔗 **Live demo:** _(deploying — link here)_
+🔗 **Live demo:** **https://dubai-tenancy-auditor.streamlit.app**
 🎥 **Demo video:** _(link here)_
 
 ---
