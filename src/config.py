@@ -47,7 +47,44 @@ def _secret(name: str) -> str | None:
 
 
 def anthropic_api_key() -> str | None:
-    return _secret("ANTHROPIC_API_KEY")
+    key = _secret("ANTHROPIC_API_KEY")
+    # A key pasted with surrounding whitespace or quotes is a common and
+    # otherwise baffling source of 401s.
+    return key.strip().strip("\"'") if key else None
+
+
+# Real keys carry this prefix and are far longer than any placeholder.
+_KEY_PREFIX = "sk-ant-"
+_KEY_MIN_LENGTH = 40
+
+
+def api_key_status() -> tuple[str, str]:
+    """Classify the key WITHOUT calling the API. Returns (status, message).
+
+    Status is "missing", "malformed", or "present". "present" means it looks
+    like a real key, not that the API has accepted it — only a request can tell
+    you that. The point of this check is to catch the placeholder-pasted-verbatim
+    case, which otherwise shows up as a mystifying 401 several clicks later.
+
+    Never logs or returns the key material itself.
+    """
+    key = anthropic_api_key()
+    if not key:
+        return "missing", "No ANTHROPIC_API_KEY is set."
+    if not key.startswith(_KEY_PREFIX):
+        return (
+            "malformed",
+            f"The key does not start with '{_KEY_PREFIX}'. It looks like a "
+            "placeholder or the wrong value was pasted.",
+        )
+    if len(key) < _KEY_MIN_LENGTH:
+        return (
+            "malformed",
+            f"The key is only {len(key)} characters, far shorter than a real key. "
+            "The placeholder 'sk-ant-...' was probably pasted literally instead of "
+            "your actual key.",
+        )
+    return "present", "A key is set and has the expected shape."
 
 
 def _int_secret(name: str, default: int) -> int:

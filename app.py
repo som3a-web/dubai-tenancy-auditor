@@ -86,7 +86,7 @@ def render_footer() -> None:
     st.caption(
         f"Benchmark data: {prov['label']} · confidence **{prov['confidence']}** — "
         f"v{__version__} · model `{config.MODEL}` · "
-        f"API key {'configured' if config.anthropic_api_key() else 'not configured'}"
+        f"API key: {config.api_key_status()[0]}"
     )
 
 
@@ -247,10 +247,13 @@ def main() -> None:
     render_header()
     st.divider()
 
-    if not config.anthropic_api_key():
+    key_status, key_message = config.api_key_status()
+    if key_status != "present":
         st.error(
-            "**No API key configured.** Set `ANTHROPIC_API_KEY` in Streamlit "
-            "secrets, then reload."
+            f"**API key problem.** {key_message}\n\n"
+            "Set a real `ANTHROPIC_API_KEY` in Streamlit secrets "
+            "(Manage app → Settings → Secrets), then wait about a minute for it "
+            "to propagate."
         )
 
     samples = sample_options()
@@ -290,7 +293,7 @@ def main() -> None:
             "press the button below."
         )
 
-    disabled = contract is None or not config.anthropic_api_key()
+    disabled = contract is None or key_status != "present"
     if st.button("Audit my contract", type="primary", disabled=disabled):
         render_run(*contract)
 
