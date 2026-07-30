@@ -452,6 +452,14 @@ def _handle_calculate_legal_max(args: dict) -> ToolResult:
         "max_increase_is_single_figure": verdict.is_single_figure,
         "permitted_increase_pct": verdict.permitted_increase_pct,
         "max_lawful_annual_rent": [round(ceiling[0]), round(ceiling[1])] if ceiling else None,
+        # Precomputed so the model never has to subtract. A live run derived this
+        # figure itself and got it right, but the rule is that no number in a
+        # verdict comes from model arithmetic — so the tool supplies it.
+        "excess_over_lawful_aed": (
+            round(proposed - ceiling[1])
+            if proposed and ceiling and proposed > ceiling[1]
+            else None
+        ),
         "article_9_blocks_increase": verdict.article_9_blocks_increase,
         "two_year_freeze_until": (
             verdict.two_year_date.isoformat() if verdict.two_year_date else None
@@ -491,6 +499,8 @@ def _handle_calculate_legal_max(args: dict) -> ToolResult:
         "Lawful ceiling": f"AED {ceiling[0]:,.0f} – {ceiling[1]:,.0f}" if ceiling else "n/a",
         "Notice (90 days)": notice.reason if notice.determinable else "cannot check",
     }
+    if payload["excess_over_lawful_aed"]:
+        display["Excess demanded"] = f"AED {payload['excess_over_lawful_aed']:,} above the lawful ceiling"
     return ToolResult(payload=payload, display=display)
 
 

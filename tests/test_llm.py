@@ -6,10 +6,10 @@ not trigger a request.
 
 from __future__ import annotations
 
-import importlib
 import os
 import sys
 import unittest
+from unittest import mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -96,28 +96,36 @@ class TestGeminiSchemaTranslation(unittest.TestCase):
                 self.assertEqual(before, after)
 
 
+KEY_VARS = ("GEMINI_API_KEY", "GOOGLE_API_KEY", "ANTHROPIC_API_KEY", "LLM_PROVIDER")
+
+
 class TestBackendSelection(unittest.TestCase):
+    """Credential selection, isolated from the developer's real secrets.
+
+    config._secret() reads Streamlit secrets before the environment, so clearing
+    env vars alone does NOT give a clean slate — a real .streamlit/secrets.toml
+    on the machine would leak in and make "no keys configured" untestable. These
+    tests patch that seam so they assert on their own inputs only.
+    """
+
     def setUp(self):
-        self._saved = {
-            k: os.environ.pop(k, None)
-            for k in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "ANTHROPIC_API_KEY", "LLM_PROVIDER")
-        }
+        self._saved = {k: os.environ.pop(k, None) for k in KEY_VARS}
+        import src.config as config
+
+        self._patch = mock.patch.object(
+            config, "_secret", side_effect=lambda name: os.environ.get(name)
+        )
+        self._patch.start()
 
     def tearDown(self):
-        for key in ("GEMINI_API_KEY", "GOOGLE_API_KEY", "ANTHROPIC_API_KEY", "LLM_PROVIDER"):
+        self._patch.stop()
+        for key in KEY_VARS:
             os.environ.pop(key, None)
         for key, value in self._saved.items():
             if value is not None:
                 os.environ[key] = value
-        import src.config as config
-
-        importlib.reload(config)
 
     def build(self):
-        import src.config as config
-
-        importlib.reload(config)
-        importlib.reload(llm)
         return llm.build_backend(tools.TOOL_SCHEMAS)
 
     def test_no_keys_returns_no_backend_with_guidance(self):

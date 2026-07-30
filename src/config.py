@@ -10,9 +10,11 @@ import os
 
 MODEL = "claude-opus-5"
 
-# Free tier, no billing setup required. The backend confirms this model exists
-# at runtime and falls back to another Flash model if Google has renamed it.
-GEMINI_MODEL = "gemini-2.5-flash"
+# Free tier, no billing setup required. Deliberately the "-latest" alias rather
+# than a pinned version: Google retires specific versions for new accounts
+# without removing them from models.list(), so a pinned id can be visible and
+# still 404 on the first call. The alias cannot go stale that way.
+GEMINI_MODEL = "gemini-flash-latest"
 
 # Hard ceilings. The agent loop aborts loudly when either is exceeded rather
 # than retrying — a runaway loop at 3am is how you lose the API budget.

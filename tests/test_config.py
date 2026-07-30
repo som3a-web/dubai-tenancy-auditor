@@ -10,10 +10,10 @@ No test here contains or prints real key material.
 
 from __future__ import annotations
 
-import importlib
 import os
 import sys
 import unittest
+from unittest import mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -24,6 +24,17 @@ REAL_SHAPED_KEY = "sk-ant-" + "a" * 95
 class KeyStatusCase(unittest.TestCase):
     """Reload config per case so the env var is re-read."""
 
+    def setUp(self):
+        # config._secret() reads Streamlit secrets before the environment, so a
+        # real .streamlit/secrets.toml on the machine would leak into these
+        # assertions. Patch the seam so each case sees only its own input.
+        import src.config as config
+
+        self._patch = mock.patch.object(
+            config, "_secret", side_effect=lambda name: os.environ.get(name)
+        )
+        self._patch.start()
+
     def status_for(self, value: str | None) -> tuple[str, str]:
         if value is None:
             os.environ.pop("ANTHROPIC_API_KEY", None)
@@ -31,14 +42,11 @@ class KeyStatusCase(unittest.TestCase):
             os.environ["ANTHROPIC_API_KEY"] = value
         import src.config as config
 
-        importlib.reload(config)
         return config.api_key_status()
 
     def tearDown(self):
+        self._patch.stop()
         os.environ.pop("ANTHROPIC_API_KEY", None)
-        import src.config as config
-
-        importlib.reload(config)
 
 
 class TestApiKeyStatus(KeyStatusCase):
@@ -86,7 +94,6 @@ class TestCeilings(KeyStatusCase):
     def test_defaults_are_sane(self):
         import src.config as config
 
-        importlib.reload(config)
         self.assertGreater(config.max_tokens_per_run(), 0)
         self.assertGreater(config.max_agent_iterations(), 0)
 
@@ -94,7 +101,6 @@ class TestCeilings(KeyStatusCase):
         os.environ["MAX_AGENT_ITERATIONS"] = "not a number"
         import src.config as config
 
-        importlib.reload(config)
         try:
             self.assertEqual(
                 config.max_agent_iterations(), config.DEFAULT_MAX_AGENT_ITERATIONS

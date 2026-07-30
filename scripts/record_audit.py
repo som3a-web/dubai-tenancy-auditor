@@ -74,6 +74,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("pdf", nargs="?", type=Path)
     parser.add_argument("--all", action="store_true", help="Record every sample contract.")
+    parser.add_argument(
+        "--delay",
+        type=int,
+        default=70,
+        help=(
+            "Seconds to pause between contracts. One audit is ~6 requests and the "
+            "Gemini free tier allows only a few per minute, so recording several "
+            "back to back trips the limit. Default 70."
+        ),
+    )
     args = parser.parse_args()
 
     if args.all:
@@ -86,9 +96,19 @@ def main() -> int:
     if not targets:
         sys.exit("no contracts found")
 
-    results = [record_one(p) for p in targets]
+    import time
+
+    results = []
+    for index, path in enumerate(targets):
+        if index and args.delay:
+            print(f"\n  … pausing {args.delay}s to stay under the free-tier rate limit")
+            time.sleep(args.delay)
+        results.append(record_one(path))
+
     succeeded = sum(results)
     print(f"\n{succeeded}/{len(results)} recorded.")
+    if succeeded < len(results):
+        print("Re-run the failures individually; rate limits reset within a minute.")
     return 0 if succeeded else 1
 
 
