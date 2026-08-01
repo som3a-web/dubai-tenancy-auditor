@@ -30,7 +30,12 @@ def _init_state() -> None:
 
 
 def _reset() -> None:
-    for key in ("contract", "result", "corrections", "replay_request", "response_draft"):
+    for key in ("contract", "result", "result_filename", "corrections",
+                "replay_request", "response_draft"):
+        st.session_state.pop(key, None)
+    # The draft widget is keyed per language and tone, so clear every variant
+    # rather than one fixed name.
+    for key in [k for k in st.session_state if str(k).startswith("response_draft_")]:
         st.session_state.pop(key, None)
 
 
@@ -161,6 +166,15 @@ def main() -> None:
     if new_audit:
         _reset()
         st.rerun()
+
+    # Say plainly what the language control does. It changes the response draft,
+    # not the legal analysis — without this the selector looks broken, because
+    # switching it appears to change nothing until you open the draft tab.
+    if language == "العربية":
+        st.info(
+            "الواجهة والتحليل القانوني باللغة الإنجليزية. اختيار العربية يغيّر "
+            "**مسودة الرد على المالك** في تبويب «Response Draft» فقط."
+        )
 
     backend, provider_message = llm.build_backend(tools.TOOL_SCHEMAS)
     analysis_enabled = backend is not None

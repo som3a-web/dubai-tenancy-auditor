@@ -410,10 +410,28 @@ def _response(result: AuditResult) -> None:
             "النسخة العربية تتضمن الصياغة والأرقام. التفاصيل القانونية الكاملة "
             "متوفرة في النسخة الإنجليزية."
         )
+        # Arabic needs RTL and Streamlit gives the textarea no direction of its
+        # own. Injected only on the Arabic branch, and the draft is the only
+        # textarea on the results screen, so a plain selector is safe here — a
+        # wrapper div would not work because the textarea is its sibling, not
+        # its child.
+        write(
+            "<style>[data-testid='stTextArea'] textarea{"
+            "direction:rtl;text-align:right;font-size:15px;line-height:1.9}</style>"
+        )
 
+    # The key varies with language and tone. Streamlit only honours `value=` on a
+    # widget's FIRST render — afterwards the stored key wins — so a fixed key
+    # would keep showing the English draft after switching to Arabic. Changing
+    # the key makes it a new widget, which re-reads `value`.
+    widget_key = f"response_draft_{'ar' if arabic else 'en'}_{tone_choice.lower()}"
     edited = st.text_area(
-        "Draft", value=draft, height=340, label_visibility="collapsed", key="response_draft"
+        "Draft", value=draft, height=340, label_visibility="collapsed", key=widget_key
     )
+    # Mirror to a stable key so the download buttons lower down see the current
+    # text whichever language and tone produced it.
+    st.session_state["response_draft"] = edited
+
     st.download_button(
         "Download as text",
         data=edited,
