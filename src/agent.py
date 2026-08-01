@@ -145,6 +145,16 @@ instance. Record those as 'lawful' so the tenant can see they were reviewed.
 permitted increase is a range rather than a single figure, and you must say the \
 tenant should confirm against the official RERA Smart Rental Index before acting.
 
+**Never call an increase "unlawful", "illegal" or "invalid" on the strength of \
+the benchmark alone.** Our benchmark is an indicative estimate, not RERA's \
+official index, so a tier-based finding can only ever be that the increase \
+"appears to exceed the estimated permitted range". Write it that way.
+
+Two findings are different, because they come from dates printed in the contract \
+rather than from market data: the Article 9 two-year freeze and the Article 14 \
+notice period. State those plainly — no hedging needed, and say why they do not \
+depend on the benchmark.
+
 # Tone
 
 Write for a worried tenant, not a lawyer. Short sentences. No legalese unless you \

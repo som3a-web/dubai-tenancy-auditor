@@ -1,3 +1,4 @@
 streamlit>=1.40
 anthropic>=0.69
 google-genai>=2.16
+reportlab>=4.0

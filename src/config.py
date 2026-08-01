@@ -109,6 +109,27 @@ def gemini_api_key() -> str | None:
     return key.strip().strip("\"'") if key else None
 
 
+def legal_review_date() -> str | None:
+    """Date the legal corpus was last reviewed, if configured.
+
+    Returns None rather than a placeholder: a fabricated review date on a legal
+    tool is worse than no date at all, so the footer simply omits the line.
+    """
+    return _secret("LEGAL_REVIEW_DATE") or _corpus_verified_on()
+
+
+def _corpus_verified_on() -> str | None:
+    """Fall back to the date recorded in the corpus itself, which is real."""
+    try:
+        import json
+        from pathlib import Path
+
+        path = Path(__file__).resolve().parent.parent / "data" / "legal_corpus.json"
+        return json.loads(path.read_text())["meta"].get("verified_on")
+    except Exception:
+        return None
+
+
 def provider() -> str:
     """Which backend to use: 'auto' (default), 'gemini', or 'anthropic'."""
     return (_secret("LLM_PROVIDER") or "auto").strip().lower()
